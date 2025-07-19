@@ -6,9 +6,9 @@ import TrailerSection from '../component/TrailerSection'
 const Home = () => {
   return (
     <>
-    <HeroSection/>
-    <FeaturedSection/>
-    <TrailerSection/>
+      <HeroSection />
+      <FeaturedSection />
+      <TrailerSection />
     </>
   )
 }

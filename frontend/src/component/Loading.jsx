@@ -1,5 +1,18 @@
+import { useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
 const Loading = () => {
+
+  const { nextUrl } = useParams()
+  const navigate = useNavigate()
+
+  useEffect(()=>{
+    if(nextUrl){
+      setTimeout(()=>{
+        navigate('/'+ nextUrl)
+      },8000)
+    }
+  },[])
   return (
     <div className="flex items-center justify-center h-screen bg-black text-white">
       <div className="flex flex-col items-center gap-4">

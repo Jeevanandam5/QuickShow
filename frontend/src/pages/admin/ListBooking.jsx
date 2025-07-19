@@ -3,22 +3,40 @@ import { dummyBookingData } from '../../assets/assets'
 import Loading from '../../component/Loading'
 import Title from '../../component/admin/Title'
 import { dateFormate } from '../../slices/dateFormate'
+import { useAppContext } from '../../context/AppContext'
+import { useAuth } from '@clerk/clerk-react'
+import { use } from 'react'
 
 const ListBooking = () => {
 
     const currency = import.meta.env.VITE_CURRENCY
 
+    const { axios, user } = useAppContext()
+    const { getToken } = useAuth()
+
     const [booking, setBooking] = useState([])
     const [loading, setLoading] = useState(true)
 
     const getAllBooking = async () => {
-        setBooking(dummyBookingData)
+        try {
+            const token = await getToken({ template: "default" })
+
+            const { data } = await axios.get('/api/admin/all-bookings', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setBooking(data.bookings)
+        } catch (error) {
+            console.error(error)
+        }
         setLoading(false)
     }
 
     useEffect(() => {
-        getAllBooking()
-    }, [])
+        if(user){
+            getAllBooking()
+        }
+        
+    }, [user])
 
     return !loading ? (
         <>

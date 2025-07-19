@@ -3,28 +3,29 @@ import { dummyShowsData } from '../../assets/assets'
 import Loading from '../../component/Loading'
 import Title from '../../component/admin/Title'
 import { dateFormate } from '../../slices/dateFormate'
+import { useAuth } from '@clerk/clerk-react'
+import { useAppContext } from '../../context/AppContext'
 
 const ListShows = () => {
 
     const currency = import.meta.env.VITE_CURRENCY
 
+    const { axios, user } = useAppContext()
+    const { getToken } = useAuth()
+
     const [show, setShow] = useState([])
-    const [loading, setloading] = useState(true)
+    const [loading, setLoading] = useState(true)
 
     const getAllShow = async () => {
         try {
 
-            setShow([{
-                movie: dummyShowsData[0],
-                showDateTime: "2025-07-30T02:30:00.000Z",
-                showPrice: 59,
-                occupiedSeats: {
-                    A1: "user_1",
-                    B1: "user_2",
-                    C1: "user_3",
-                }
-            }])
-            setloading(false)
+            const token = await getToken({ template: "default" })
+
+            const { data } = await axios.get('/api/admin/all-shows', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setShow(data.shows)
+            setLoading(false)
 
         } catch (error) {
             console.log(error)
@@ -32,8 +33,10 @@ const ListShows = () => {
     }
 
     useEffect(() => {
-        getAllShow()
-    }, [])
+        if(user){
+            getAllShow()
+        }
+    }, [user])
 
     return !loading ? (
         <>
@@ -49,7 +52,7 @@ const ListShows = () => {
                         </tr>
                     </thead>
                     <tbody className='text-sm font-light'>
-                        {show.map((show , index) => (
+                        {show.map((show, index) => (
                             <tr key={index} className='border-b border-primary/10 bg-primary/5 even:bg-primary/10'>
                                 <td className='p-2 min-w-45 pl-5'>{show.movie.title}</td>
                                 <td className='p-2'>{dateFormate(show.showDateTime)}</td>
