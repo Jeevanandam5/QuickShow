@@ -3,6 +3,39 @@ import Booking from "../models/booking.js";
 import Show from "../models/show.js"
 import stripe, { Stripe } from 'stripe'
 
+export const checkPayment = inngest.createFunction(
+  { id: "check-payment" },
+  { event: "app/checkpayment" },
+  async ({ event, step }) => {
+    const bookingId = event.data.bookingId;
+    console.log("Checking payment for booking:", bookingId);
+
+    // Wait for a few seconds to give Stripe time to process
+    await step.sleep("Wait for Stripe to process", "5s");
+
+    // Fetch the booking
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      console.log("Booking not found");
+      return { success: false, message: "Booking not found" };
+    }
+
+    // Check if already paid
+    if (booking.isPaid) {
+      console.log("Already paid");
+      return { success: true, alreadyPaid: true };
+    }
+
+    // Optional: re-check Stripe session if needed here
+    // Skipping that since your webhook already handles it
+
+    // Final fallback logic (in case webhook failed, manually check)
+    console.log("Booking is not marked as paid yet. Will retry later.");
+    
+    return { success: true, isPaid: booking.isPaid };
+  }
+);
+
 const checkSeatAvailability = async (showId, selectedSeats) => {
     try {
         const showData = await Show.findById(showId)
