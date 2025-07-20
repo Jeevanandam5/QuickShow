@@ -69,38 +69,38 @@ const syncUserUpdate = inngest.createFunction(
 //Inngest function  to cancle booking and release the seats and show if payment is not made
 
 const releaseSeatsAndBooking = inngest.createFunction(
-  { id: 'release-seats-delete-booking' },
-  { event: "app/checkpayment" },
-  async ({ event, step }) => {
-    const oneMinutesLater = new Date(Date.now() + 1 * 60 * 1000);
-    await step.sleepUntil('wait-for-1-minutes', oneMinutesLater);
+    { id: 'release-seats-delete-booking' },
+    { event: "app/checkpayment" },
+    async ({ event, step }) => {
+        const fiveMinutesLater = new Date(Date.now() + 5 * 60 * 1000);
+        await step.sleepUntil('wait-for-5-minutes', fiveMinutesLater);
 
-    await step.run('check-payment-status', async () => {
-      const bookingId = event.data.bookingId;
+        await step.run('check-payment-status', async () => {
+            const bookingId = event.data.bookingId;
 
-      // CRITICAL: Always REFETCH latest status
-      const booking = await Booking.findById(bookingId);
+            // CRITICAL: Always REFETCH latest status
+            const booking = await Booking.findById(bookingId);
 
-      if (!booking) return;
+            if (!booking) return;
 
-      // RECHECK PAYMENT STATUS before deleting
-      if (!booking.isPaid) {
-        const show = await Show.findById(booking.show);
+            // RECHECK PAYMENT STATUS before deleting
+            if (!booking.isPaid) {
+                const show = await Show.findById(booking.show);
 
-        booking.bookedSeats.forEach((seat) => {
-          delete show.occupiedSeats[seat];
+                booking.bookedSeats.forEach((seat) => {
+                    delete show.occupiedSeats[seat];
+                });
+
+                show.markModified('occupiedSeats');
+                await show.save();
+                await Booking.findByIdAndDelete(booking._id);
+
+                console.log(`Booking ${bookingId} canceled due to non-payment`);
+            } else {
+                console.log(`Booking ${bookingId} already paid. Skip cancel.`);
+            }
         });
-
-        show.markModified('occupiedSeats');
-        await show.save();
-        await Booking.findByIdAndDelete(booking._id);
-
-        console.log(`Booking ${bookingId} canceled due to non-payment`);
-      } else {
-        console.log(`Booking ${bookingId} already paid. Skip cancel.`);
-      }
-    });
-  }
+    }
 );
 
 
@@ -138,9 +138,9 @@ const sendBookingConfirmationEmail = inngest.createFunction(
 
 
 export const functions = [
-  syncUserCreation,
-  syncUserDelete,
-  syncUserUpdate,
-  releaseSeatsAndBooking,
-  sendBookingConfirmationEmail
+    syncUserCreation,
+    syncUserDelete,
+    syncUserUpdate,
+    releaseSeatsAndBooking,
+    sendBookingConfirmationEmail
 ];
