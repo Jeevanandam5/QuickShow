@@ -61,7 +61,7 @@ const syncUserUpdate = inngest.createFunction(
             name: first_name + '' + last_name,
             image: image_url
         }
-        await User.findByIdAndUpdated(id, userdata, { new: true })
+        await User.findByIdAndUpdate(id, userdata, { new: true })
     }
 )
 
@@ -69,29 +69,40 @@ const syncUserUpdate = inngest.createFunction(
 //Inngest function  to cancle booking and release the seats and show if payment is not made
 
 const releaseSeatsAndBooking = inngest.createFunction(
-    { id: 'release-seats-delete-booking' },
-    { event: "app/checkpayment" },
-    async ({ event, step }) => {
-        const oneMinutesLater = new Date(Date.now() + 1 * 60 * 1000);
-        await step.sleepUntil('wait-for-1-minutes', oneMinutesLater)
+  { id: 'release-seats-delete-booking' },
+  { event: "app/checkpayment" },
+  async ({ event, step }) => {
+    const oneMinutesLater = new Date(Date.now() + 1 * 60 * 1000);
+    await step.sleepUntil('wait-for-1-minutes', oneMinutesLater);
 
-        await step.run('check-payment-status', async () => {
-            const bookingId = event.data.bookingId;
-            const booking = await Booking.findById(bookingId)
+    await step.run('check-payment-status', async () => {
+      const bookingId = event.data.bookingId;
 
-            //check payment status
-            if (!booking.isPaid) {
-                const show = await Show.findById(booking.show);
-                booking.bookedSeats.forEach((seat) => {
-                    delete show.occupiedSeats[seat]
-                });
-                show.markModified('occupiedSeats')
-                await show.save()
-                await Booking.findByIdAndDelete(booking._id)
-            }
-        })
-    }
-)
+      // CRITICAL: Always REFETCH latest status
+      const booking = await Booking.findById(bookingId);
+
+      if (!booking) return;
+
+      // RECHECK PAYMENT STATUS before deleting
+      if (!booking.isPaid) {
+        const show = await Show.findById(booking.show);
+
+        booking.bookedSeats.forEach((seat) => {
+          delete show.occupiedSeats[seat];
+        });
+
+        show.markModified('occupiedSeats');
+        await show.save();
+        await Booking.findByIdAndDelete(booking._id);
+
+        console.log(`Booking ${bookingId} canceled due to non-payment`);
+      } else {
+        console.log(`Booking ${bookingId} already paid. Skip cancel.`);
+      }
+    });
+  }
+);
+
 
 //Inngest function to send email to bookes user
 const sendBookingConfirmationEmail = inngest.createFunction(
@@ -126,4 +137,10 @@ const sendBookingConfirmationEmail = inngest.createFunction(
 
 
 
-export const functions = [syncUserCreation, syncUserDelete, syncUserUpdate, releaseSeatsAndBooking,sendBookingConfirmationEmail];
+export const functions = [
+  syncUserCreation,
+  syncUserDelete,
+  syncUserUpdate,
+  releaseSeatsAndBooking,
+  sendBookingConfirmationEmail
+];
