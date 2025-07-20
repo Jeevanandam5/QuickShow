@@ -21,11 +21,10 @@ export const stripeWebhooks = async (request, response) => {
                 const sessionList = await stripeInstance.checkout.sessions.list({
                     payment_intent: paymentIntent.id
                 })
-
                 const session = sessionList.data[0];
                 const { bookingId } = session.metadata;
 
-                await Booking.findByIdAndUpdate(bookingId, {  
+                await Booking.findByIdAndUpdate(bookingId, {
                     isPaid: true,
                     paymentLink: ""
                 })
@@ -33,11 +32,11 @@ export const stripeWebhooks = async (request, response) => {
                 // send confirm email
                 await inngest.send({
                     name: "app/show.booked",
-                    data: {bookingId}
+                    data: { bookingId }
                 })
-
                 break;
             }
+
 
             default:
                 console.log('Unhandled event type:', event.type);
