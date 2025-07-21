@@ -3,7 +3,7 @@ import User from "../models/user.js";
 import Booking from "../models/booking.js";
 import Show from "../models/show.js";
 import { model } from "mongoose";
-import sendEmail from "../configs/nodeMailer.js";
+import { sendEmailJS } from "../configs/email.js.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "movie-ticket-booking" });
@@ -117,21 +117,15 @@ const sendBookingConfirmationEmail = inngest.createFunction(
             populate: { path: "movie", model: "Movie" }
         }).populate('user');
 
-        await sendEmail({
-            to: booking.user.email,
-            subject: `payment Confirmation: "${booking.show.movie.title}" booked!`,
-            body: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-            <h2>Hi ${booking.user.name},</h2>
-            <p>Your booking for <strong style="color: #F84565;">"${booking.show.movie.title}"</strong> is confirmed.</p>
-            <p>
-                <strong>Date:</strong> ${new Date(booking.show.showDateTime).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' })}<br/>
-                <strong>Time:</strong> ${new Date(booking.show.showDateTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' })}
-            </p>
-            <p>Enjoy the show! 🍿</p>
-            <p>Thanks for booking with us!<br/>- QuickShow Team</p>
-            </div>`
-        })
+        await sendEmailJS({
+            to_name: booking.user.name,
+            user_email: booking.user.email,
+            movie: booking.show.movie.title,
+            date: new Date(booking.show.showDateTime).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' }),
+            time: new Date(booking.show.showDateTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' }),
+            seats: booking.bookedSeats.join(', ')
+        });
+
     }
 )
 
