@@ -95,7 +95,7 @@ const SeatLayout = () => {
       })
 
       if(data.success){
-        window.location.href = data.url;
+       window.location.href = data.url; 
       }else{
         toast.error(data.message)
       }

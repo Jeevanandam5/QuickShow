@@ -46,24 +46,25 @@ const syncUserUpdate = inngest.createFunction(
     { id: 'update-user-with-clerk' },
     { event: 'clerk/user.updated' },
     async ({ event }) => {
-
         const {
             id,
             first_name,
             last_name,
             email_addresses,
             image_url
-        } = event.data
+        } = event.data;
 
         const userdata = {
             _id: id,
             email: email_addresses[0].email_address,
-            name: first_name + '' + last_name,
+            name: `${first_name} ${last_name}`, // Fixed string concatenation
             image: image_url
-        }
-        await User.findByIdAndUpdate(id, userdata, { new: true })
+        };
+        
+        // CORRECTED METHOD NAME:
+        await User.findByIdAndUpdate(id, userdata, { new: true });
     }
-)
+);
 
 
 //Inngest function  to cancle booking and release the seats and show if payment is not made
