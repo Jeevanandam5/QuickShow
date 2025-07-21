@@ -21,7 +21,7 @@ const bookingSchema = new mongoose.Schema({
     },
     isPaid : {
         type : Boolean,
-        default : false,
+        default : true,
     },
     paymentLink : {
         type : String,
