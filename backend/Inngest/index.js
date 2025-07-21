@@ -60,7 +60,7 @@ const syncUserUpdate = inngest.createFunction(
             name: `${first_name} ${last_name}`, // Fixed string concatenation
             image: image_url
         };
-        
+
         // CORRECTED METHOD NAME:
         await User.findByIdAndUpdate(id, userdata, { new: true });
     }

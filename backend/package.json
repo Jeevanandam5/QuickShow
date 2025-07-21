@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "inngest": "npx inngest dev"
   },
   "keywords": [],
   "author": "",
@@ -26,5 +27,8 @@
     "nodemon": "^3.1.10",
     "stripe": "^18.3.0",
     "svix": "^1.69.0"
+  },
+  "devDependencies": {
+    "inngest-cli": "^1.9.1"
   }
 }
