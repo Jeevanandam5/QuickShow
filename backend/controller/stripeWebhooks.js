@@ -3,65 +3,71 @@ import Booking from "../models/booking.js";
 import { inngest } from "../Inngest/index.js";
 
 export const stripeWebhooks = async (request, response) => {
-    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const sig = request.headers["stripe-signature"];
+  const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const sig = request.headers["stripe-signature"];
 
-    let event;
+  let event;
 
-    try {
-        // Use raw body if using Express body parser
-        const rawBody = request.rawBody || request.body;
-        event = stripeInstance.webhooks.constructEvent(
-            rawBody, 
-            sig, 
-            process.env.STRIPE_WEBHOOK_KEY
-        );
-    } catch (error) {
-        console.error(`Webhook Error: ${error.message}`);
-        return response.status(400).send(`Webhook Error: ${error.message}`);
+  try {
+    event = stripeInstance.webhooks.constructEvent(
+      request.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_KEY
+    );
+  } catch (error) {
+    console.log("Webhook signature error:", error.message);
+    return response.status(400).send(`Webhook Error: ${error.message}`);
+  }
+
+  try {
+    let bookingId = null;
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      bookingId = session.metadata?.bookingId;
+      console.log("Webhook: checkout.session.completed");
     }
 
-    try {
-        switch (event.type) {
-            case "payment_intent.succeeded": {
-                const paymentIntent = event.data.object;
-                
-                // Alternative approach to get booking ID
-                const bookingId = paymentIntent.metadata?.bookingId;
-                
-                if (!bookingId) {
-                    console.error("Booking ID not found in metadata");
-                    return response.status(400).send("Missing booking ID");
-                }
+    if (event.type === "payment_intent.succeeded") {
+      const intent = event.data.object;
 
-                const updated = await Booking.findByIdAndUpdate(
-                    bookingId,
-                    { 
-                        isPaid: true, 
-                        paymentLink: "",
-                        paymentIntentId: paymentIntent.id
-                    },
-                    { new: true }
-                );
+      const sessions = await stripeInstance.checkout.sessions.list({
+        payment_intent: intent.id,
+        limit: 1,
+      });
 
-                if (!updated) {
-                    return response.status(404).send("Booking not found");
-                }
-
-                console.log("Payment marked as successful:", bookingId);
-
-                await inngest.send({
-                    name: "app/show.booked",
-                    data: { bookingId }
-                });
-
-                break;
-            }
-        }
-
-        response.json({ received: true });
-    } catch (error) {
-        console.error("Webhook processing error:", error);
-        response.status(500).send("Internal Server Error");
+      const session = sessions.data[0];
+      bookingId = session?.metadata?.bookingId;
+      console.log("Webhook: payment_intent.succeeded");
     }
-}
+
+    if (!bookingId) {
+      console.log("Booking ID missing in metadata");
+      return response.status(400).send("Missing booking ID");
+    }
+
+    const updated = await Booking.findByIdAndUpdate(
+      bookingId,
+      { isPaid: true, paymentLink: "" },
+      { new: true }
+    );
+
+    if (!updated) {
+      console.log(" Booking not found in DB");
+      return response.status(404).send("Booking not found");
+    }
+
+    console.log(" Booking marked as paid:", updated._id);
+
+    // Send confirmation email via Inngest
+    await inngest.send({
+      name: "app/show.booked",
+      data: { bookingId },
+    });
+
+    response.json({ received: true });
+  } catch (error) {
+    console.log(" Webhook processing error:", error);
+    response.status(500).send("Internal server error");
+  }
+};
