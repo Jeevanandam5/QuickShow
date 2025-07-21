@@ -19,14 +19,14 @@ import Loading from './component/Loading'
 
 const App = () => {
 
-  const isAdimeRoute = useLocation().pathname.startsWith('/admin')
+  const isAdminRoute  = useLocation().pathname.startsWith('/admin')
 
   const { user } = useAppContext()
 
   return (
     <>
       <Toaster />
-      {!isAdimeRoute && <NavBar />}
+      {!isAdminRoute  && <NavBar />}
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/movie' element={<Movie />} />
@@ -48,7 +48,7 @@ const App = () => {
           <Route path='list-booking' element={<ListBooking/>} />
         </Route>
       </Routes>
-      {!isAdimeRoute && <Footer />}
+      {!isAdminRoute  && <Footer />}
     </>
   )
 }
