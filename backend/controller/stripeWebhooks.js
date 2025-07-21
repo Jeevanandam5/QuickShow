@@ -16,14 +16,21 @@ export const stripeWebhooks = async (request, response) => {
 
     try {
         switch (event.type) {
-            case "checkout.session.completed": {
-                const session = event.data.object;
-                const bookingId = session.metadata?.bookingId;
+            case "payment_intent.succeeded": {
+                const paymentIntent = event.data.object;
 
-                console.log("Checkout Completed - Booking ID:", bookingId);
+                // Get session to access metadata
+                const session = await stripeInstance.checkout.sessions.list({
+                    payment_intent: paymentIntent.id,
+                    limit: 1
+                });
+
+                const matchedSession = session.data[0];
+                const bookingId = matchedSession?.metadata?.bookingId;
 
                 if (!bookingId) {
-                    return response.status(400).send("Missing booking ID in metadata");
+                    console.error("Booking ID not found in metadata");
+                    return response.status(400).send("Missing booking ID");
                 }
 
                 const updated = await Booking.findByIdAndUpdate(
@@ -36,7 +43,7 @@ export const stripeWebhooks = async (request, response) => {
                     return response.status(404).send("Booking not found");
                 }
 
-                console.log("Booking marked as paid:", updated._id);
+                console.log(" Payment marked as successful:", bookingId);
 
                 await inngest.send({
                     name: "app/show.booked",
@@ -45,14 +52,11 @@ export const stripeWebhooks = async (request, response) => {
 
                 break;
             }
-
-            default:
-                console.log("Unhandled event type:", event.type);
         }
 
-        response.json({ received: true })
-    } catch (error) {
-        console.log("webhook processing error:", error)
-        response.status(500).send("Internal server Error")
+            response.json({ received: true })
+        } catch (error) {
+            console.log("webhook processing error:", error)
+            response.status(500).send("Internal server Error")
+        }
     }
-}
