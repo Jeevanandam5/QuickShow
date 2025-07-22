@@ -24,7 +24,7 @@ app.post('/api/stripe', express.raw({ type: 'application/json' }), (req, res, ne
 
 app.use(express.json())
 app.use(cors({
-  origin: 'http://localhost:5173','https://quickshow-livid.vercel.app'
+  origin: ['http://localhost:5173','https://quickshow-livid.vercel.app'],
   credentials: true
 }))
 
