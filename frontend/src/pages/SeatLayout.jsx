@@ -137,7 +137,7 @@ const SeatLayout = () => {
         <p className='text-gray-400 text-sm mb-6'>SCREEN SIDE</p>
 
         <div className='flex flex-col items-center mt-10 text-xs text-gray-300'>
-          <div className='grid grid-cols-2 md:grid-cols-1 gap-8 md:gap-2 mb-6'>
+          <div className='grid grid-cols-1 gap-8 md:gap-2 mb-6'>
             <div>
               {groupRows[0].map(row => renderSeats(row))}
             </div>
