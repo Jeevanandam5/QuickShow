@@ -20,6 +20,8 @@ import Loading from './component/Loading'
 const App = () => {
 
   const isAdminRoute  = useLocation().pathname.startsWith('/admin')
+  const location = useLocation()
+  const isSeatSelectionRoute = location.pathname.includes('/movie/') && location.pathname.includes('/')
 
   const { user } = useAppContext()
 
@@ -48,7 +50,7 @@ const App = () => {
           <Route path='list-booking' element={<ListBooking/>} />
         </Route>
       </Routes>
-      {!isAdminRoute  && <Footer />}
+      {!isAdminRoute  && !isSeatSelectionRoute && <Footer />}
     </>
   )
 }
