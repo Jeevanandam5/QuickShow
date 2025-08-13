@@ -28,8 +28,7 @@ const NavBar = () => {
                 <Link onClick={() => { scrollTo(0, 0); setIsOpen(false) }} to="movie">Movies</Link>
                 <Link onClick={() => { scrollTo(0, 0); setIsOpen(false) }} to="/">Theatres</Link>
                 <Link onClick={() => { scrollTo(0, 0); setIsOpen(false) }} to="/movie">Releases</Link>
-                {favoriteMovies?.length > 0 && <Link onClick={() => { scrollTo(0, 0); setIsOpen(false) }} to="/favorite">Favorites</Link>
-                }
+                {favoriteMovies?.length > 0 && <Link onClick={() => { scrollTo(0, 0); setIsOpen(false) }} to="/favorite">Favorites</Link>}
             </div>
             <div className='flex items-center justify-end md:gap-8 ml-auto'>
                 <SearchIcon className="max-md:hidden w-6 h-6 cursor-pointer" />
